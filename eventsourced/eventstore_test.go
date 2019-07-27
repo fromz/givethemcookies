@@ -1,3 +1,5 @@
+// +build integration
+
 package eventsourced_test
 
 import (
@@ -73,7 +75,7 @@ func setupDb(t *testing.T) *sql.DB {
 }
 
 // TestPostgresEventStore_Save tests save method works without errors, todo switch to mock db
-func TestPostgresEventStore_Save(t *testing.T) {
+func TestPostgresEventStore_Save_Integration(t *testing.T) {
 	e := eventsourced.Event{
 		AggregateType: "test",
 		Type:          "created",
@@ -102,7 +104,7 @@ func TestPostgresEventStore_Save(t *testing.T) {
 }
 
 // TestPostgresEventStore_Save tests save method works without errors, todo switch to mock db
-func TestPostgresEventStore_Load(t *testing.T) {
+func TestPostgresEventStore_Load_Integration(t *testing.T) {
 	aid := eventsourced.AggregateID(uuid.New().String())
 	e := eventsourced.Event{
 		AggregateType: "test",
