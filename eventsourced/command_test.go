@@ -28,4 +28,5 @@ func TestCommandBus_HandleCommand(t *testing.T) {
 	if len(evs) != 1 {
 		t.Errorf("Expected 1 event got %d", len(evs))
 	}
+	t.Error("Testing failed tests")
 }
