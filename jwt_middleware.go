@@ -6,17 +6,25 @@ import (
 	"strings"
 )
 
+// JWTVerify verifies JWTs and populates "dest" with claims
 type JwtVerifier interface {
 	Verify(rawJWT string, dest ...interface{}) error
 }
 
+// ClaimFetcher is a function which returns a pointer for the claims to be populated against, e.g. givethemcookies.Claims
+type ClaimFetcher = func() interface{}
+
+// MissingAuthorizationHeader is returned to the http client when there's a missing authorization header in the request
 var MissingAuthorizationHeader = "MISSING_AUTHORIZATION_HEADER"
 
+// MalformedAuthorizationHeader is returned to the http client when there's a malformed authorization header in the request
 var MalformedAuthorizationHeader = "MALFORMED_AUTHORIZATION_HEADER"
 
+// InvalidJWTToken is returned to the http client when an invalid token is supplied in the request
 var InvalidJWTToken = "INVALID_JWT_TOKEN"
 
-func JWTMiddleware(handler http.HandlerFunc, verifier JwtVerifier) http.HandlerFunc {
+// JWTMiddleware authorizes an populates claims from claimFetcher and sets it to context
+func JWTMiddleware(handler http.HandlerFunc, verifier JwtVerifier, claimFetcher ClaimFetcher) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqToken := r.Header.Get("Authorization")
 		if reqToken == "" {
@@ -30,14 +38,14 @@ func JWTMiddleware(handler http.HandlerFunc, verifier JwtVerifier) http.HandlerF
 			return
 		}
 
-		var claims Claims
-		if err := verifier.Verify(splitToken[1], &claims); err != nil {
+		claim := claimFetcher()
+		if err := verifier.Verify(splitToken[1], claim); err != nil {
 			http.Error(w, InvalidJWTToken, 401)
 			log.Error(err)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "user", claims)
+		ctx := context.WithValue(r.Context(), "user", claim)
 		handler(w, r.WithContext(ctx))
 	}
 }

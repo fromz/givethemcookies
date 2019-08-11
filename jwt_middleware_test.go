@@ -42,9 +42,13 @@ func (s failureJwtVerifier) Verify(rawJWT string, dest ...interface{}) error {
 	return errors.New("JWT Verification Failed")
 }
 
+func claimFetcher() interface{} {
+	return &givethemcookies.Claims{}
+}
+
 func prepareTest(t *testing.T, handlerFunc http.HandlerFunc, verifier givethemcookies.JwtVerifier, jwtHeader *string) (string, int) {
 	givethemcookies.SetLogger(logrus.New())
-	ts := httptest.NewServer(givethemcookies.JWTMiddleware(handlerFunc, verifier))
+	ts := httptest.NewServer(givethemcookies.JWTMiddleware(handlerFunc, verifier, claimFetcher))
 	defer ts.Close()
 
 	var u bytes.Buffer
@@ -143,7 +147,7 @@ func GetClaimsToJsonHandler() http.HandlerFunc {
 	fn := func(rw http.ResponseWriter, req *http.Request) {
 		user := req.Context().Value("user")
 		switch v := user.(type) {
-		case givethemcookies.Claims:
+		case *givethemcookies.Claims:
 			b, err := json.Marshal(v)
 			if err != nil {
 				panic(err.Error())
@@ -158,6 +162,7 @@ func GetClaimsToJsonHandler() http.HandlerFunc {
 func TestJWTMiddleware_ValidJWT_ClaimsAreSet(t *testing.T) {
 	s, code := prepareTest(t, GetClaimsToJsonHandler(), successJwtVerifier{}, stringToPointerString("Bearer VALID.JWT.TOKEN"))
 	var claims givethemcookies.Claims
+
 	if err := json.Unmarshal([]byte(s), &claims); err != nil {
 		t.Error(err)
 	}
