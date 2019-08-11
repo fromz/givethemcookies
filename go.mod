@@ -9,4 +9,5 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/square/go-jose v2.3.1+incompatible
 	github.com/y0ssar1an/q v1.0.7
+	gopkg.in/square/go-jose.v2 v2.3.1
 )
